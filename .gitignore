@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
+
+# Leftover SQLite artifacts from before switching to Postgres
+prisma/dev.db
+prisma/migrations_sqlite_backup/

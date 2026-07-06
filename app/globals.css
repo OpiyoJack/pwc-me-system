@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #EDE6D8;
+  --foreground: #241D18;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-wrap table {
+  min-width: 480px;
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  main {
+    padding: 24px 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .pwc-sidebar {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 14px !important;
+  }
+  .pwc-sidebar nav {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+  body {
+    display: block !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .chart-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.tab-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.tab-scroll::-webkit-scrollbar-thumb {
+  background: #DED2BC;
+  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .dash-split {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .detail-split {
+    grid-template-columns: 1fr !important;
+  }
 }

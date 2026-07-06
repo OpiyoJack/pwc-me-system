@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int        @id @default(autoincrement())
+  name             String
+  email            String     @unique
+  password         String
+  role             String     @default("coordinator")
+  active           Boolean    @default(true)
+  permissions      String     @default("")
+  mustChangePassword Boolean  @default(false)
+  mfaEnabled       Boolean    @default(false)
+  mfaSecret        String?
+  phone            String?
+  createdAt        DateTime   @default(now())
+  coordinatedProjects Project[] @relation("ProjectCoordinator")
+  donorProjects       Project[] @relation("ProjectDonorContact")
+  ownedRisks          Risk[]    @relation("RiskOwner")
+  assignedFeedback    Feedback[] @relation("FeedbackAssignee")
+}
+
+model Project {
+  id             Int           @id @default(autoincrement())
+  name           String
+  sector         String
+  district       String
+  status         String        @default("Ongoing") // Planned | Ongoing | Completed | On Hold | Terminated
+  budget         Float?
+  startDate      DateTime?
+  endDate        DateTime?
+  indicators     Indicator[]
+  beneficiaries  Beneficiary[]
+  members        Member[]
+  feedbacks      Feedback[]
+  risks          Risk[]
+  frameworkNodes FrameworkNode[]
+  createdAt      DateTime      @default(now())
+  coordinator    User?         @relation("ProjectCoordinator", fields: [coordinatorId], references: [id])
+  coordinatorId  Int?
+  donorContact   User?         @relation("ProjectDonorContact", fields: [donorContactId], references: [id])
+  donorContactId Int?
+}
+
+model Indicator {
+  id            Int               @id @default(autoincrement())
+  name          String
+  target        Float
+  actual        Float             @default(0)
+  unit          String
+  project       Project           @relation(fields: [projectId], references: [id])
+  projectId     Int
+  updates       IndicatorUpdate[]
+  frameworkNode FrameworkNode?    @relation(fields: [frameworkNodeId], references: [id])
+  frameworkNodeId Int?
+}
+
+model FrameworkNode {
+  id        Int             @id @default(autoincrement())
+  project   Project         @relation(fields: [projectId], references: [id])
+  projectId Int
+  levelLabel String         // e.g. "Goal", "Outcome", "Output" — free text, user-defined
+  title     String
+  description String?
+  order     Int             @default(0)
+  parent    FrameworkNode?  @relation("NodeChildren", fields: [parentId], references: [id])
+  parentId  Int?
+  children  FrameworkNode[] @relation("NodeChildren")
+  indicators Indicator[]
+  createdAt DateTime        @default(now())
+}
+
+model Beneficiary {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  sex       String
+  age       Int
+  district  String
+  sector    String
+  enrolled  DateTime @default(now())
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId Int?
+}
+
+model Member {
+  id        Int      @id @default(autoincrement())
+  name      String
+  village   String
+  district  String
+  status    String   @default("Pending")
+  joined    DateTime @default(now())
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId Int?
+}
+
+model Feedback {
+  id         Int      @id @default(autoincrement())
+  category   String
+  district   String
+  note       String
+  status     String   @default("Open")
+  createdAt  DateTime @default(now())
+  project    Project? @relation(fields: [projectId], references: [id])
+  projectId  Int?
+  assignee   User?    @relation("FeedbackAssignee", fields: [assigneeId], references: [id])
+  assigneeId Int?
+}
+
+model IndicatorUpdate {
+  id          Int       @id @default(autoincrement())
+  indicator   Indicator @relation(fields: [indicatorId], references: [id])
+  indicatorId Int
+  newActual   Float
+  note        String?
+  createdAt   DateTime  @default(now())
+}
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  userName  String
+  userEmail String?
+  action    String   // e.g. "Login", "Logout", "Created project", "Updated risk"
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model DeletionLog {
+  id          Int      @id @default(autoincrement())
+  entityType  String   // e.g. "Project"
+  entityName  String
+  reason      String
+  deletedBy   String
+  deletedAt   DateTime @default(now())
+}
+
+model ReportRequest {
+  id          Int       @id @default(autoincrement())
+  reportType  String    @default("programme_summary")
+  name        String    @default("PWC M&E Results Report")
+  description String    @default("A comprehensive summary of project results, beneficiaries, and feedback for the selected period and scope.")
+  requestedByName String
+  requestedById   Int?
+  startDate   DateTime?
+  endDate     DateTime?
+  projectId   Int?
+  projectName String?
+  status      String    @default("Processing") // Processing | Finished
+  createdAt   DateTime  @default(now())
+  finishedAt  DateTime?
+}
+
+model Risk {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  likelihood  String   @default("Medium") // Low | Medium | High
+  impact      String   @default("Medium") // Low | Medium | High
+  mitigation  String?
+  status      String   @default("Open")   // Open | Mitigated | Closed
+  createdAt   DateTime @default(now())
+  project     Project? @relation(fields: [projectId], references: [id])
+  projectId   Int?
+  owner       User?    @relation("RiskOwner", fields: [ownerId], references: [id])
+  ownerId     Int?
+}
