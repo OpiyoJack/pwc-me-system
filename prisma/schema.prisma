@@ -8,72 +8,72 @@ datasource db {
 }
 
 model User {
-  id               Int        @id @default(autoincrement())
-  name             String
-  email            String     @unique
-  password         String
-  role             String     @default("coordinator")
-  active           Boolean    @default(true)
-  permissions      String     @default("")
-  mustChangePassword Boolean  @default(false)
-  mfaEnabled       Boolean    @default(false)
-  mfaSecret        String?
-  phone            String?
-  createdAt        DateTime   @default(now())
-  coordinatedProjects Project[] @relation("ProjectCoordinator")
-  donorProjects       Project[] @relation("ProjectDonorContact")
-  ownedRisks          Risk[]    @relation("RiskOwner")
+  id                  Int        @id @default(autoincrement())
+  name                String
+  email               String     @unique
+  password            String
+  role                String     @default("coordinator")
+  active              Boolean    @default(true)
+  permissions         String     @default("")
+  mustChangePassword  Boolean    @default(false)
+  mfaEnabled          Boolean    @default(false)
+  mfaSecret           String?
+  phone               String?
+  createdAt           DateTime   @default(now())
   assignedFeedback    Feedback[] @relation("FeedbackAssignee")
+  coordinatedProjects Project[]  @relation("ProjectCoordinator")
+  donorProjects       Project[]  @relation("ProjectDonorContact")
+  ownedRisks          Risk[]     @relation("RiskOwner")
 }
 
 model Project {
-  id             Int           @id @default(autoincrement())
+  id             Int             @id @default(autoincrement())
   name           String
   sector         String
   district       String
-  status         String        @default("Ongoing") // Planned | Ongoing | Completed | On Hold | Terminated
+  status         String          @default("Ongoing")
   budget         Float?
   startDate      DateTime?
   endDate        DateTime?
-  indicators     Indicator[]
-  beneficiaries  Beneficiary[]
-  members        Member[]
-  feedbacks      Feedback[]
-  risks          Risk[]
-  frameworkNodes FrameworkNode[]
-  createdAt      DateTime      @default(now())
-  coordinator    User?         @relation("ProjectCoordinator", fields: [coordinatorId], references: [id])
+  createdAt      DateTime        @default(now())
   coordinatorId  Int?
-  donorContact   User?         @relation("ProjectDonorContact", fields: [donorContactId], references: [id])
   donorContactId Int?
+  beneficiaries  Beneficiary[]
+  feedbacks      Feedback[]
+  frameworkNodes FrameworkNode[]
+  indicators     Indicator[]
+  members        Member[]
+  coordinator    User?           @relation("ProjectCoordinator", fields: [coordinatorId], references: [id])
+  donorContact   User?           @relation("ProjectDonorContact", fields: [donorContactId], references: [id])
+  risks          Risk[]
 }
 
 model Indicator {
-  id            Int               @id @default(autoincrement())
-  name          String
-  target        Float
-  actual        Float             @default(0)
-  unit          String
-  project       Project           @relation(fields: [projectId], references: [id])
-  projectId     Int
-  updates       IndicatorUpdate[]
-  frameworkNode FrameworkNode?    @relation(fields: [frameworkNodeId], references: [id])
+  id              Int               @id @default(autoincrement())
+  name            String
+  target          Float
+  actual          Float             @default(0)
+  unit            String
+  projectId       Int
   frameworkNodeId Int?
+  frameworkNode   FrameworkNode?    @relation(fields: [frameworkNodeId], references: [id])
+  project         Project           @relation(fields: [projectId], references: [id])
+  updates         IndicatorUpdate[]
 }
 
 model FrameworkNode {
-  id        Int             @id @default(autoincrement())
-  project   Project         @relation(fields: [projectId], references: [id])
-  projectId Int
-  levelLabel String         // e.g. "Goal", "Outcome", "Output" — free text, user-defined
-  title     String
+  id          Int             @id @default(autoincrement())
+  projectId   Int
+  levelLabel  String
+  title       String
   description String?
-  order     Int             @default(0)
-  parent    FrameworkNode?  @relation("NodeChildren", fields: [parentId], references: [id])
-  parentId  Int?
-  children  FrameworkNode[] @relation("NodeChildren")
-  indicators Indicator[]
-  createdAt DateTime        @default(now())
+  order       Int             @default(0)
+  parentId    Int?
+  createdAt   DateTime        @default(now())
+  parent      FrameworkNode?  @relation("NodeChildren", fields: [parentId], references: [id])
+  children    FrameworkNode[] @relation("NodeChildren")
+  project     Project         @relation(fields: [projectId], references: [id])
+  indicators  Indicator[]
 }
 
 model Beneficiary {
@@ -85,8 +85,8 @@ model Beneficiary {
   district  String
   sector    String
   enrolled  DateTime @default(now())
-  project   Project? @relation(fields: [projectId], references: [id])
   projectId Int?
+  project   Project? @relation(fields: [projectId], references: [id])
 }
 
 model Member {
@@ -96,8 +96,8 @@ model Member {
   district  String
   status    String   @default("Pending")
   joined    DateTime @default(now())
-  project   Project? @relation(fields: [projectId], references: [id])
   projectId Int?
+  project   Project? @relation(fields: [projectId], references: [id])
 }
 
 model Feedback {
@@ -107,66 +107,66 @@ model Feedback {
   note       String
   status     String   @default("Open")
   createdAt  DateTime @default(now())
-  project    Project? @relation(fields: [projectId], references: [id])
   projectId  Int?
-  assignee   User?    @relation("FeedbackAssignee", fields: [assigneeId], references: [id])
   assigneeId Int?
+  assignee   User?    @relation("FeedbackAssignee", fields: [assigneeId], references: [id])
+  project    Project? @relation(fields: [projectId], references: [id])
 }
 
 model IndicatorUpdate {
   id          Int       @id @default(autoincrement())
-  indicator   Indicator @relation(fields: [indicatorId], references: [id])
   indicatorId Int
   newActual   Float
   note        String?
   createdAt   DateTime  @default(now())
+  indicator   Indicator @relation(fields: [indicatorId], references: [id])
 }
 
 model ActivityLog {
   id        Int      @id @default(autoincrement())
   userName  String
   userEmail String?
-  action    String   // e.g. "Login", "Logout", "Created project", "Updated risk"
+  action    String
   details   String?
   createdAt DateTime @default(now())
 }
 
 model DeletionLog {
-  id          Int      @id @default(autoincrement())
-  entityType  String   // e.g. "Project"
-  entityName  String
-  reason      String
-  deletedBy   String
-  deletedAt   DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  entityType String
+  entityName String
+  reason     String
+  deletedBy  String
+  deletedAt  DateTime @default(now())
 }
 
 model ReportRequest {
-  id          Int       @id @default(autoincrement())
-  reportType  String    @default("programme_summary")
-  name        String    @default("PWC M&E Results Report")
-  description String    @default("A comprehensive summary of project results, beneficiaries, and feedback for the selected period and scope.")
+  id              Int       @id @default(autoincrement())
+  reportType      String    @default("programme_summary")
+  name            String    @default("PWC M&E Results Report")
+  description     String    @default("A comprehensive summary of project results, beneficiaries, and feedback for the selected period and scope.")
   requestedByName String
   requestedById   Int?
-  startDate   DateTime?
-  endDate     DateTime?
-  projectId   Int?
-  projectName String?
-  status      String    @default("Processing") // Processing | Finished
-  createdAt   DateTime  @default(now())
-  finishedAt  DateTime?
+  startDate       DateTime?
+  endDate         DateTime?
+  projectId       Int?
+  projectName     String?
+  status          String    @default("Processing")
+  createdAt       DateTime  @default(now())
+  finishedAt      DateTime?
 }
 
 model Risk {
   id          Int      @id @default(autoincrement())
   title       String
   description String?
-  likelihood  String   @default("Medium") // Low | Medium | High
-  impact      String   @default("Medium") // Low | Medium | High
+  likelihood  String   @default("Medium")
+  impact      String   @default("Medium")
   mitigation  String?
-  status      String   @default("Open")   // Open | Mitigated | Closed
+  status      String   @default("Open")
   createdAt   DateTime @default(now())
-  project     Project? @relation(fields: [projectId], references: [id])
   projectId   Int?
-  owner       User?    @relation("RiskOwner", fields: [ownerId], references: [id])
   ownerId     Int?
+  owner       User?    @relation("RiskOwner", fields: [ownerId], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id])
 }
