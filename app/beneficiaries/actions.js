@@ -2,6 +2,7 @@
 
 import { prisma } from "../../lib/prisma";
 import { revalidatePath } from "next/cache";
+import { recalculateProjectFormulas } from "../../lib/formula-engine";
 import { auth } from "../../auth";
 import { logActivity } from "../../lib/activity-log";
 
@@ -27,7 +28,10 @@ export async function addBeneficiary(formData) {
   const session = await auth();
   await logActivity(session?.user?.name, "Created beneficiary", name, session?.user?.email);
 
+  if (projectId) await recalculateProjectFormulas(Number(projectId));
+
   revalidatePath("/beneficiaries");
+  revalidatePath("/projects");
 }
 
 export async function updateBeneficiary(id, formData) {

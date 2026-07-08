@@ -27,7 +27,7 @@ export default async function ProjectsPage({ searchParams }) {
 
   const [allProjects, coordinators, donors] = await Promise.all([
     prisma.project.findMany({
-      include: { indicators: true, risks: true, coordinator: true, donorContact: true },
+      include: { indicators: { include: { formula: true } }, risks: true, coordinator: true, donorContact: true },
       orderBy: { id: "asc" },
     }),
     prisma.user.findMany({ where: { role: { in: ["coordinator", "meofficer", "admin"] } }, orderBy: { name: "asc" } }),
@@ -141,7 +141,7 @@ export default async function ProjectsPage({ searchParams }) {
                 )}
                 <div style={{ display: "grid", gap: 4 }}>
                   {p.indicators.map((i) => (
-                    <IndicatorProgress key={i.id} indicator={i} canEdit={canEdit} />
+                    <IndicatorProgress key={i.id} indicator={i} canEdit={canEdit} projectId={p.id} />
                   ))}
                 </div>
 

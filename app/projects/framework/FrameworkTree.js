@@ -1,23 +1,12 @@
 "use client";
 import { useState } from "react";
 import { addFrameworkNode, deleteFrameworkNode, addIndicatorToNode, assignIndicatorToNode } from "./actions";
+import IndicatorProgress from "../IndicatorProgress";
 
 const inputStyle = { padding: "7px 9px", borderRadius: 6, border: "1px solid #DED2BC", fontSize: 12.5, width: "100%", boxSizing: "border-box" };
 
-function IndicatorLine({ indicator }) {
-  const pct = indicator.target > 0 ? Math.round((indicator.actual / indicator.target) * 100) : 0;
-  const color = pct >= 80 ? "#5C7A3D" : pct >= 40 ? "#D9A441" : "#B8442D";
-  return (
-    <div style={{ padding: "6px 0" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 3 }}>
-        <span>📊 {indicator.name}</span>
-        <span style={{ fontWeight: 600 }}>{indicator.actual}/{indicator.target} {indicator.unit} ({pct}%)</span>
-      </div>
-      <div style={{ background: "#EDE6D8", borderRadius: 6, height: 5, overflow: "hidden" }}>
-        <div style={{ width: `${Math.min(pct, 100)}%`, background: color, height: "100%" }} />
-      </div>
-    </div>
-  );
+function IndicatorLine({ indicator, projectId, canEdit }) {
+  return <IndicatorProgress indicator={indicator} canEdit={canEdit} projectId={projectId} />;
 }
 
 function NodeForm({ onSubmit, onCancel, placeholderTitle }) {
@@ -92,7 +81,7 @@ function NodeItem({ node, depth, projectId, canEdit }) {
 
         {node.indicators.length > 0 && (
           <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #EDE6D8" }}>
-            {node.indicators.map((i) => <IndicatorLine key={i.id} indicator={i} />)}
+            {node.indicators.map((i) => <IndicatorLine key={i.id} indicator={i} projectId={projectId} canEdit={canEdit} />)}
           </div>
         )}
 

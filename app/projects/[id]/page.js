@@ -28,7 +28,7 @@ export default async function ProjectDetailPage({ params }) {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
-      indicators: true,
+      indicators: { include: { formula: true } },
       coordinator: true,
       donorContact: true,
       risks: { orderBy: { id: "desc" } },

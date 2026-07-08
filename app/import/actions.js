@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "../../auth";
 import { logActivity } from "../../lib/activity-log";
+import { recalculateProjectFormulas } from "../../lib/formula-engine";
 
 const VALID_SEX = ["Female", "Male"];
 const VALID_SECTORS = ["education", "economic", "rights", "health", "water", "climate"];
@@ -73,8 +74,15 @@ export async function importBeneficiaries(rows, projects) {
       created++;
     } catch { skipped.push({ row: i + 1, reason: "Could not save record" }); }
   }
+  const touchedProjects = new Set(rows.map((r) => (r.project || "").toString().trim().toLowerCase()).filter(Boolean));
+  for (const pname of touchedProjects) {
+    const proj = projects.find((p) => p.name.toLowerCase().trim() === pname);
+    if (proj) await recalculateProjectFormulas(proj.id);
+  }
+
   revalidatePath("/beneficiaries");
   revalidatePath("/");
+  revalidatePath("/projects");
   return { created, skipped, total: rows.length };
 }
 

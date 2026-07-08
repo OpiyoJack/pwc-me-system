@@ -27,3 +27,20 @@ export async function updateIndicatorActual(indicatorId, formData) {
   revalidatePath("/projects");
   revalidatePath("/");
 }
+
+
+export async function updateIndicatorDetails(indicatorId, projectId, formData) {
+  const name = formData.get("name");
+  const target = formData.get("target");
+  const unit = formData.get("unit");
+
+  if (!name || !name.trim() || !unit || !unit.trim()) return;
+
+  await prisma.indicator.update({
+    where: { id: Number(indicatorId) },
+    data: { name: name.trim(), target: Number(target) || 0, unit: unit.trim() },
+  });
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+}
