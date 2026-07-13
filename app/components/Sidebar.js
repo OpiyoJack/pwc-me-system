@@ -1,17 +1,19 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { hasPermission } from "../../lib/permissions";
 
 const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/projects", label: "Projects & Indicators" },
   { href: "/beneficiaries", label: "Beneficiaries" },
-  { href: "/membership", label: "Staff & Users" },
+  { href: "/membership", label: "Staff & Users", check: (u) => u.role === "admin" || hasPermission(u, "can_manage_staff") },
   { href: "/risks", label: "Risk Register" },
   { href: "/feedback", label: "Feedback & Accountability" },
-  { href: "/import", label: "Import Data" },
-  { href: "/admin/deletion-log", label: "Deletion Log" },
-  { href: "/admin/activity-log", label: "Activity Log" },
+  { href: "/import", label: "Import Data", check: (u) => ["admin", "coordinator", "meofficer"].includes(u.role) || hasPermission(u, "can_import_data") },
+  { href: "/admin/deletion-log", label: "Deletion Log", check: (u) => u.role === "admin" || hasPermission(u, "can_manage_staff") },
+  { href: "/admin/activity-log", label: "Activity Log", check: (u) => u.role === "admin" || hasPermission(u, "can_manage_staff") },
   { href: "/analytics", label: "Analytics" },
   { href: "/reports", label: "Reports" },
   { href: "/security", label: "Security" },
@@ -19,8 +21,14 @@ const NAV = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-
+  const { data: session } = useSession();
   if (pathname === "/login") return null;
+
+  const visibleNav = NAV.filter((item) => {
+    if (!item.check) return true; // no restriction — everyone with an account can see it
+    if (!session?.user) return false; // session not loaded yet — hide restricted items until we know
+    return item.check(session.user);
+  });
 
   return (
     <aside className="pwc-sidebar"
@@ -41,7 +49,7 @@ export default function Sidebar() {
         </div>
       </div>
       <nav style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        {NAV.map((item) => {
+        {visibleNav.map((item) => {
           const active = pathname === item.href;
           return (
             <Link

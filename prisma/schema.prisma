@@ -57,9 +57,9 @@ model Indicator {
   unit            String
   projectId       Int
   frameworkNodeId Int?
-  formula       IndicatorFormula?
   frameworkNode   FrameworkNode?    @relation(fields: [frameworkNodeId], references: [id])
   project         Project           @relation(fields: [projectId], references: [id])
+  formula         IndicatorFormula?
   updates         IndicatorUpdate[]
 }
 
@@ -175,11 +175,11 @@ model Risk {
 
 model IndicatorFormula {
   id          Int       @id @default(autoincrement())
-  indicator   Indicator @relation(fields: [indicatorId], references: [id])
   indicatorId Int       @unique
   field       String
   operator    String
   value       String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  indicator   Indicator @relation(fields: [indicatorId], references: [id])
 }

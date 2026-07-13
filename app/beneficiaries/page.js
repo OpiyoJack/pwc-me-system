@@ -1,11 +1,12 @@
 import { prisma } from "../../lib/prisma";
-import { addBeneficiary } from "./actions";
+
 import { auth } from "../../auth";
 import BeneficiaryRow from "./BeneficiaryRow";
 import Link from "next/link";
 import StatCards from "../components/StatCards";
 import Pagination from "../components/Pagination";
 import TZ_DISTRICTS from "../../lib/tanzania-districts";
+import OfflineBeneficiaryPanel from "./OfflineBeneficiaryPanel";
 
 const PAGE_SIZE = 12;
 
@@ -37,11 +38,19 @@ export default async function BeneficiariesPage({ searchParams }) {
     prisma.beneficiary.count({ where }),
     prisma.project.findMany({ orderBy: { name: "asc" } }),
   ]);
-  const districts = [...new Set(projects.map((p) => p.district))].sort();
+  const projectDistricts = [...new Set(projects.map((p) => p.district))].sort();
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const totalLinked = await prisma.beneficiary.count({ where: { ...where, projectId: { not: null } } });
   const femaleCount = await prisma.beneficiary.count({ where: { ...where, sex: "Female" } });
   const femalePct = totalCount > 0 ? Math.round((femaleCount / totalCount) * 100) : 0;
+
+  // "Districts covered" should reflect the actual beneficiary records, not
+  // just the districts our seeded projects happen to be in — beneficiaries
+  // can be registered in any of Tanzania's districts via the full dropdown.
+  const beneficiaryDistrictRows = await prisma.beneficiary.findMany({
+    where, select: { district: true }, distinct: ["district"],
+  });
+  const beneficiaryDistrictCount = beneficiaryDistrictRows.filter((r) => r.district).length;
 
   const cellStyle = { padding: "8px 10px", borderBottom: "1px solid #DED2BC", fontSize: 13.5 };
   const inputStyle = { padding: "7px 9px", borderRadius: 6, border: "1px solid #DED2BC", fontSize: 13.5, width: "100%", boxSizing: "border-box" };
@@ -58,54 +67,13 @@ export default async function BeneficiariesPage({ searchParams }) {
       <StatCards
         cards={[
           { label: "Total beneficiaries", value: totalCount, color: "#1B3A5C" },
-          { label: "Districts covered", value: districts.length, color: "#2E7D8C" },
+          { label: "Districts covered", value: beneficiaryDistrictCount, color: "#2E7D8C" },
           { label: "Linked to a project", value: totalLinked, color: "#5C7A3D" },
           { label: "Female / Male split", value: `${femalePct}% / ${100 - femalePct}%`, color: "#D9A441" },
         ]}
       />
 
-      {canEdit && (
-        <form
-          action={addBeneficiary}
-          className="form-grid"
-          style={{ background: "#FBF8F2", border: "1px solid #DED2BC", borderRadius: 10, padding: 18, marginBottom: 20 }}
-        >
-          <div style={{ gridColumn: "1 / -1", fontWeight: 700, fontSize: 14 }}>Add beneficiary</div>
-          <input name="name" placeholder="Full name" required style={inputStyle} />
-          <input name="phone" placeholder="Phone number" style={inputStyle} />
-          <select name="sex" style={inputStyle} defaultValue="Female">
-            <option>Female</option>
-            <option>Male</option>
-          </select>
-          <input name="age" type="number" placeholder="Age" style={inputStyle} />
-          <select name="district" style={inputStyle} defaultValue="">
-            <option value="">Select district</option>
-            {TZ_DISTRICTS.map((r) => (
-              <optgroup key={r.region} label={r.region}>
-                {r.districts.map((d) => <option key={d} value={d}>{d}</option>)}
-              </optgroup>
-            ))}
-          </select>
-          <select name="sector" style={inputStyle} defaultValue="education">
-            <option value="education">Education</option>
-            <option value="economic">Women's Economic Empowerment</option>
-            <option value="rights">Rights & Leadership</option>
-            <option value="health">Health</option>
-            <option value="water">Water</option>
-            <option value="climate">Climate Change</option>
-          </select>
-          <select name="projectId" style={{ ...inputStyle, gridColumn: "1 / -1" }} defaultValue="">
-            <option value="">No specific project (optional)</option>
-            {projects.map((p) => <option key={p.id} value={p.id}>{p.name} · {p.district}</option>)}
-          </select>
-          <button
-            type="submit"
-            style={{ background: "#1B3A5C", color: "#fff", border: "none", borderRadius: 6, padding: "9px 16px", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}
-          >
-            Save record
-          </button>
-        </form>
-      )}
+      {canEdit && <OfflineBeneficiaryPanel projects={projects} />}
 
       <form method="GET" style={{ marginBottom: 16, display: "flex", gap: 8 }}>
         <input

@@ -45,3 +45,8 @@ next-env.d.ts
 # Leftover SQLite artifacts from before switching to Postgres
 prisma/dev.db
 prisma/migrations_sqlite_backup/
+
+# Serwist-generated service worker (built fresh on each deploy)
+public/sw.js
+public/sw.js.map
+public/swe-worker*.js

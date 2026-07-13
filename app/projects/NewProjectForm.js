@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { addProject } from "./actions";
+import TZ_DISTRICTS from "../../lib/tanzania-districts";
 
 const inputStyle = { padding: "8px 10px", borderRadius: 6, border: "1px solid #DED2BC", fontSize: 13.5, width: "100%", boxSizing: "border-box" };
 const SECTORS = [
@@ -80,12 +81,14 @@ export default function NewProjectForm({ districts, coordinators, donors }) {
           <label style={{ fontSize: 10.5, color: "#665f52" }}>Expected end date</label>
           <input name="endDate" type="date" min={startDate || undefined} style={inputStyle} />
         </div>
-        <div style={{ gridColumn: "1 / -1" }}>
-          <input name="district" placeholder="District (existing or new)" required list="district-options" style={inputStyle} />
-          <datalist id="district-options">
-            {districts.map((d) => <option key={d} value={d} />)}
-          </datalist>
-        </div>
+        <select name="district" required style={inputStyle} defaultValue="">
+          <option value="">Select district</option>
+          {TZ_DISTRICTS.map((r) => (
+            <optgroup key={r.region} label={r.region}>
+              {r.districts.map((d) => <option key={d} value={d}>{d}</option>)}
+            </optgroup>
+          ))}
+        </select>
         <select name="coordinatorId" defaultValue="" style={inputStyle}>
           <option value="">Assign coordinator (optional)</option>
           {coordinators.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}

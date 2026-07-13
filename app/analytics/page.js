@@ -2,6 +2,8 @@ import { prisma } from "../../lib/prisma";
 import StatCards from "../components/StatCards";
 import { SectorRadar, RiskBreakdown, DistrictComparisonBars, IndicatorTrend } from "./charts";
 import { getEffectiveStatus } from "../../lib/project-status";
+
+export const dynamic = "force-dynamic";
 import { Radar, ShieldAlert, MapPin, TrendingUp, BarChart3 } from "lucide-react";
 
 const SECTOR_LABELS = {
