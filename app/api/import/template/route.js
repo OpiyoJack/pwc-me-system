@@ -16,19 +16,21 @@ const FEEDBACK_STATUS_OPTIONS = ["Open", "Resolved"];
 // Lists-sheet column supplies its values. Some fields need a different list
 // depending on the target (e.g. "status" means something different for
 // risks vs. feedback), so we key those by targetKey too.
-function getValidationMap(targetKey, listCols) {
+// Maps each field key to the *name* of its list (not the column letter —
+// that gets resolved separately via listCols/listLengths using this name).
+function getValidationMap(targetKey) {
   const common = {
-    district: listCols.district,
-    sector: listCols.sector,
-    project: listCols.project,
-    projectName: listCols.project,
-    sex: listCols.sex,
+    district: "district",
+    sector: "sector",
+    project: "project",
+    projectName: "project",
+    sex: "sex",
   };
   if (targetKey === "risks") {
-    return { ...common, likelihood: listCols.level, impact: listCols.level, status: listCols.riskStatus };
+    return { ...common, likelihood: "level", impact: "level", status: "riskStatus" };
   }
   if (targetKey === "feedback") {
-    return { ...common, category: listCols.feedbackCategory, status: listCols.feedbackStatus };
+    return { ...common, category: "feedbackCategory", status: "feedbackStatus" };
   }
   return common;
 }
@@ -127,7 +129,7 @@ export async function GET(request) {
 
   // Apply dropdown validation to every relevant column, for a generous
   // number of rows so users can keep adding data beyond just the example.
-  const validationMap = getValidationMap(targetKey, listCols);
+  const validationMap = getValidationMap(targetKey);
   const MAX_ROWS = 500;
   targetDef.fields.forEach((f, colIdx) => {
     const listKey = validationMap[f.key];

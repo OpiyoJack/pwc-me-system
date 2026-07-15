@@ -8,6 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import RefreshButton from "../RefreshButton";
+import EncryptedDownloadButton from "../EncryptedDownloadButton";
 
 function formatDateTime(d) {
   return new Date(d).toISOString().slice(0, 16).replace("T", " ");
@@ -142,10 +143,11 @@ export default async function ReportQueuePage({ params }) {
                 <td style={cellStyle}>{periodLabel(r)}</td>
                 <td style={cellStyle}>{timeTaken(r.createdAt, r.finishedAt)}</td>
                 <td style={cellStyle}>
-                  <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <Link href={`/reports/view/${r.id}`} style={{ background: "#1B3A5C", color: "#fff", textDecoration: "none", borderRadius: 6, padding: "4px 10px", fontSize: 12, fontWeight: 600 }}>View</Link>
                     <Link href={`/api/reports/excel?requestId=${r.id}`} style={{ background: "#5C7A3D", color: "#fff", textDecoration: "none", borderRadius: 6, padding: "4px 10px", fontSize: 12, fontWeight: 600 }}>Excel</Link>
                     <Link href={`/api/reports/pdf?requestId=${r.id}`} style={{ background: "#B8442D", color: "#fff", textDecoration: "none", borderRadius: 6, padding: "4px 10px", fontSize: 12, fontWeight: 600 }}>PDF</Link>
+                    <EncryptedDownloadButton requestId={r.id} />
                   </div>
                 </td>
               </tr>

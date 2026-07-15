@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import EncryptedDownloadButton from "../../EncryptedDownloadButton";
 import { buildFrameworkPath } from "../../../../lib/framework-path";
 
 const SECTOR_LABELS = {
@@ -216,9 +217,10 @@ export default async function ReportViewPage({ params }) {
 
       {body}
 
-      <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+      <div style={{ display: "flex", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
         <Link href={`/api/reports/excel?requestId=${rr.id}`} style={{ background: "#5C7A3D", color: "#fff", textDecoration: "none", borderRadius: 6, padding: "9px 16px", fontSize: 13.5, fontWeight: 600 }}>Download Excel</Link>
         <Link href={`/api/reports/pdf?requestId=${rr.id}`} style={{ background: "#B8442D", color: "#fff", textDecoration: "none", borderRadius: 6, padding: "9px 16px", fontSize: 13.5, fontWeight: 600 }}>Download PDF</Link>
+        <EncryptedDownloadButton requestId={rr.id} />
       </div>
     </main>
   );
