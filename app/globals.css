@@ -80,3 +80,25 @@ body {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Leaflet map styling to match the PWC brand palette */
+.leaflet-container {
+  font-family: inherit !important;
+  background: #EDE6D8 !important;
+}
+.leaflet-control-attribution {
+  background: rgba(251, 248, 242, 0.85) !important;
+  font-size: 9.5px !important;
+  color: #665f52 !important;
+  border-radius: 6px 0 0 0;
+}
+.pwc-map-tooltip.leaflet-tooltip {
+  background: #FBF8F2 !important;
+  border: 1px solid #DED2BC !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 14px rgba(36,29,24,0.15) !important;
+  padding: 8px 10px !important;
+}
+.pwc-map-tooltip.leaflet-tooltip::before {
+  border-top-color: #DED2BC !important;
+}

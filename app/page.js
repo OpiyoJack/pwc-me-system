@@ -2,6 +2,8 @@ import { prisma } from "../lib/prisma";
 
 import Link from "next/link";
 import { getEffectiveStatus } from "../lib/project-status";
+import { buildRegionPrevalence } from "../lib/gis-helpers";
+import ProjectMap from "./components/ProjectMap";
 import {
   FolderKanban, Users, UserCheck, MessageSquareWarning, Target,
   UserPlus, FilePlus2, UserCog, FileBarChart, AlertTriangle,
@@ -75,6 +77,7 @@ export default async function DashboardPage() {
   const recentProjects = projects.slice(0, 5);
   const recentFeedback = feedback.slice(0, 4);
   const priorityRisks = risks.filter((r) => r.status !== "Closed").slice(0, 4);
+  const regionPrevalence = buildRegionPrevalence(projects, beneficiaries);
 
   const cardBase = { background: "#FBF8F2", border: "1px solid #DED2BC", borderRadius: 10, textDecoration: "none", color: "#241D18" };
 
@@ -201,6 +204,43 @@ export default async function DashboardPage() {
                 {r.project && <div style={{ fontSize: 11, color: "#665f52" }}>{r.project.name}</div>}
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ background: "#FBF8F2", border: "1px solid #DED2BC", borderRadius: 12, padding: 20, marginBottom: 24, boxShadow: "0 1px 3px rgba(36,29,24,0.05)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>Where we work</div>
+          <div style={{ display: "flex", gap: 14, fontSize: 11.5, color: "#665f52" }}>
+            <span><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: "#1B3A5C", marginRight: 5 }} />Active projects</span>
+            <span><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: "#D9A441", marginRight: 5 }} />Beneficiaries only</span>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 18 }} className="dash-split">
+          <ProjectMap regions={regionPrevalence} height={320} />
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: "#665f52", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>
+              Top regions by activity
+            </div>
+            <div style={{ display: "grid", gap: 8, maxHeight: 320, overflowY: "auto", paddingRight: 4 }}>
+              {regionPrevalence.length === 0 && <div style={{ fontSize: 13, color: "#665f52" }}>No regional activity recorded yet.</div>}
+              {[...regionPrevalence].sort((a, b) => (b.projects + b.beneficiaries) - (a.projects + a.beneficiaries)).map((r, i) => {
+                const total = r.projects + r.beneficiaries;
+                const maxTotal = Math.max(...regionPrevalence.map((x) => x.projects + x.beneficiaries), 1);
+                const pct = Math.round((total / maxTotal) * 100);
+                return (
+                  <div key={r.region} style={{ background: "#F3EDE0", borderRadius: 8, padding: "9px 12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 5 }}>
+                      <span style={{ fontWeight: 700 }}>{i + 1}. {r.region}</span>
+                      <span style={{ color: "#665f52" }}>{r.projects} proj · {r.beneficiaries} benef.</span>
+                    </div>
+                    <div style={{ background: "#EDE6D8", borderRadius: 6, height: 5, overflow: "hidden" }}>
+                      <div style={{ width: `${pct}%`, background: r.projects > 0 ? "#1B3A5C" : "#D9A441", height: "100%" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
