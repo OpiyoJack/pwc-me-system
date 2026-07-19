@@ -13,7 +13,7 @@ const NAV = [
   { href: "/feedback", label: "Feedback & Accountability" },
   { href: "/import", label: "Import Data", check: (u) => ["admin", "coordinator", "meofficer"].includes(u.role) || hasPermission(u, "can_import_data") },
   { href: "/admin/deletion-log", label: "Deletion Log", check: (u) => u.role === "admin" || hasPermission(u, "can_manage_staff") },
-  { href: "/admin/activity-log", label: "Activity Log", check: (u) => u.role === "admin" || hasPermission(u, "can_manage_staff") },
+  { href: "/admin/activity-log", label: "Activity Log", check: (u) => u.role === "admin" },
   { href: "/analytics", label: "Analytics" },
   { href: "/reports", label: "Reports" },
   { href: "/security", label: "Security" },

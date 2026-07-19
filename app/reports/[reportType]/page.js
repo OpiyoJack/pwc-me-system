@@ -3,6 +3,7 @@ import { auth } from "../../../auth";
 import { resolveReportScope } from "../../../lib/report-scope";
 import { getReportById } from "../../../lib/report-catalog";
 import RequestReportModal from "../RequestReportModal";
+import { cleanupOldReportRequests } from "../actions";
 import QueuePoller from "../QueuePoller";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -33,9 +34,13 @@ export default async function ReportQueuePage({ params }) {
 
   const currentUserId = session?.user?.id ? Number(session.user.id) : null;
 
+  await cleanupOldReportRequests();
+
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const allRequests = await prisma.reportRequest.findMany({
     where: {
       reportType,
+      createdAt: { gte: twentyFourHoursAgo },
       // Donors see: their own requests (whatever the scope), PLUS anyone's
       // requests that are explicitly scoped to one of their own projects.
       // An unrestricted "all projects" request made by someone else stays

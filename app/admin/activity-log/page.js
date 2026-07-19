@@ -1,17 +1,16 @@
 import { prisma } from "../../../lib/prisma";
 import { auth } from "../../../auth";
-import { hasPermission } from "../../../lib/permissions";
 
 export default async function ActivityLogPage({ searchParams }) {
   const session = await auth();
-  const canView = session?.user?.role === "admin" || hasPermission(session?.user, "can_manage_staff");
+  const isAdmin = session?.user?.role === "admin";
 
-  if (!canView) {
+  if (!isAdmin) {
     return (
       <main style={{ maxWidth: 700, margin: "0", padding: "60px 20px", fontFamily: "sans-serif" }}>
         <div style={{ background: "#FBF8F2", border: "1px solid #DED2BC", borderRadius: 10, padding: 30, textAlign: "center" }}>
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Access restricted</div>
-          <div style={{ fontSize: 13.5, color: "#665f52" }}>You don't have permission to view the activity log.</div>
+          <div style={{ fontSize: 13.5, color: "#665f52" }}>Only Administrators can view the activity log.</div>
         </div>
       </main>
     );
@@ -19,13 +18,19 @@ export default async function ActivityLogPage({ searchParams }) {
 
   const params = await searchParams;
   const q = (params?.q || "").trim().toLowerCase();
+  const includeAuthEvents = params?.includeAuth === "1";
   const page = Math.max(1, parseInt(params?.page || "1", 10) || 1);
   const PAGE_SIZE = 30;
 
-  const where = q ? { OR: [{ userName: { contains: q, mode: "insensitive" } }, { action: { contains: q, mode: "insensitive" } }, { details: { contains: q, mode: "insensitive" } }] } : {};
-  const [logs, totalCount] = await Promise.all([
+  const where = {
+    ...(includeAuthEvents ? {} : { action: { notIn: ["Login", "Logout"] } }),
+    ...(q ? { OR: [{ userName: { contains: q, mode: "insensitive" } }, { action: { contains: q, mode: "insensitive" } }, { details: { contains: q, mode: "insensitive" } }] } : {}),
+  };
+
+  const [logs, totalCount, authEventCount] = await Promise.all([
     prisma.activityLog.findMany({ where, orderBy: { id: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
     prisma.activityLog.count({ where }),
+    prisma.activityLog.count({ where: { action: { in: ["Login", "Logout"] } } }),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -39,21 +44,32 @@ export default async function ActivityLogPage({ searchParams }) {
     return { bg: "#F6E7CC", fg: "#8C6414" };
   };
 
+  const baseParams = new URLSearchParams();
+  if (q) baseParams.set("q", q);
+  if (includeAuthEvents) baseParams.set("includeAuth", "1");
+
   return (
     <main style={{ margin: "0", padding: "40px 32px", width: "100%", boxSizing: "border-box", fontFamily: "sans-serif" }}>
       <h1 style={{ fontSize: 28, marginBottom: 6 }}>Activity Log</h1>
       <p style={{ color: "#665f52", fontSize: 13.5, marginBottom: 18 }}>
-        {totalCount} recorded event{totalCount !== 1 ? "s" : ""} — every login, logout, and key action taken in the system.
+        {totalCount} recorded event{totalCount !== 1 ? "s" : ""} shown — a permanent record of key actions taken in the system, restricted to Administrators.
       </p>
 
-      <form method="GET" style={{ marginBottom: 16 }}>
+      <form method="GET" style={{ marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <input
           type="text"
           name="q"
           defaultValue={q}
           placeholder="Search by user, action, or details..."
-          style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid #DED2BC", fontSize: 13.5, width: 300, maxWidth: "100%" }}
+          style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid #DED2BC", fontSize: 13.5, width: 280, maxWidth: "100%" }}
         />
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#665f52" }}>
+          <input type="checkbox" name="includeAuth" value="1" defaultChecked={includeAuthEvents} />
+          Include login/logout events ({authEventCount})
+        </label>
+        <button type="submit" style={{ background: "#1B3A5C", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}>
+          Apply
+        </button>
       </form>
 
       <div style={{ background: "#FBF8F2", border: "1px solid #DED2BC", borderRadius: 10, overflow: "hidden" }}>
@@ -87,9 +103,9 @@ export default async function ActivityLogPage({ searchParams }) {
 
       {totalPages > 1 && (
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          {page > 1 && <a href={`?q=${encodeURIComponent(q)}&page=${page - 1}`} style={{ fontSize: 12.5, padding: "6px 11px", border: "1px solid #DED2BC", borderRadius: 6, textDecoration: "none", color: "#241D18" }}>← Prev</a>}
+          {page > 1 && <a href={`?${baseParams.toString()}&page=${page - 1}`} style={{ fontSize: 12.5, padding: "6px 11px", border: "1px solid #DED2BC", borderRadius: 6, textDecoration: "none", color: "#241D18" }}>← Prev</a>}
           <span style={{ fontSize: 12.5, color: "#665f52", padding: "6px 0" }}>Page {page} of {totalPages}</span>
-          {page < totalPages && <a href={`?q=${encodeURIComponent(q)}&page=${page + 1}`} style={{ fontSize: 12.5, padding: "6px 11px", border: "1px solid #DED2BC", borderRadius: 6, textDecoration: "none", color: "#241D18" }}>Next →</a>}
+          {page < totalPages && <a href={`?${baseParams.toString()}&page=${page + 1}`} style={{ fontSize: 12.5, padding: "6px 11px", border: "1px solid #DED2BC", borderRadius: 6, textDecoration: "none", color: "#241D18" }}>Next →</a>}
         </div>
       )}
     </main>

@@ -54,3 +54,13 @@ export async function advanceReportQueue() {
 
   revalidatePath("/reports");
 }
+
+
+// Report requests older than 24 hours are removed from the visible queue —
+// keeps the list from growing unbounded and limits how long report metadata
+// (scope, date ranges) sits around after it's no longer needed. The fact
+// that a report was requested still remains in the Activity Log.
+export async function cleanupOldReportRequests() {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  await prisma.reportRequest.deleteMany({ where: { createdAt: { lt: cutoff } } });
+}
